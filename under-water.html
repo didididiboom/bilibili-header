@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        #app {
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+            min-width: 1000px;
+            min-height: 155px;
+            height: 10vw;
+            max-height: 240px;
+        }
+
+        .layer {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        img {
+            user-select: none;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">loading...</div>
+
+    <script>
+        const barnerImagesData = [
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f131ddac507ccdb7db2.webp',
+                transform: [1, 0, 0, 1, 0, 0],
+                width: 1950,
+                a: 0.01 // 代表加速度，不同图层有不同的加速度，加速度越快代表移动幅度越大
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f821ddac507ccdc71e4.webp',
+                transform: [1, 0, 0, 1, -240, -5],
+                width: 457.5,
+                deg: -Math.PI / 60000,
+                a: 0.035,
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f561ddac507ccdc10d9.webp',
+                transform: [1, 0, 0, 1, -300, 45],
+                width: 157.5,
+                deg: -Math.PI / 15000,
+                a: 0.03,
+                g: -0.02
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f811ddac507ccdc715c.webp',
+                transform: [1, 0, 0, 1, -180, 0],
+                width: 314.3,
+                a: -0.035
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f7c1ddac507ccdc64c2.webp',
+                transform: [1, 0, 0, 1, -300, 20],
+                width: 571.2,
+                deg: Math.PI / 40000,
+                a: 0.05
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f7c1ddac507ccdc65e6.webp',
+                transform: [1, 0, 0, 1, 100, 0],
+                width: 1446,
+                a: 0.01
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f7c1ddac507ccdc655c.webp',
+                transform: [1, 0, 0, 1, 220, 0],
+                width: 158.25,
+                deg: Math.PI / 10000,
+                a: 0.06,
+                g: 0.045
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f7c1ddac507ccdc6536.webp',
+                transform: [1, 0, 0, 1, -240, 0],
+                width: 1721.3,
+                a: 0.01
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f811ddac507ccdc7133.webp',
+                transform: [1, 0, 0, 1, 320, 0],
+                width: 642.96,
+                a: 0.075,
+                g: -0.025
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f7c1ddac507ccdc649b.webp',
+                transform: [1, 0, 0, 1, 20, 0],
+                blur: 1,
+                width: 2131.5,
+                a: 0.18
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f5c1ddac507ccdc1bbd.webp',
+                transform: [1, 0, 0, 1, 400, 0],
+                blur: 2.5,
+                width: 299.52,
+                deg: -Math.PI / 30000,
+                a: 0.15,
+                g: -0.02
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f571ddac507ccdc113d.webp',
+                transform: [1, 0, 0, 1, 0, 10],
+                width: 457.1,
+                deg: Math.PI / 20000,
+                f: 0.0001,
+                a: 0.06,
+                g: 0.01
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f561ddac507ccdc10aa.webp',
+                transform: [1, 0, 0, 1, -150, 0],
+                width: 419.2,
+                opacity: [0.1, 1],
+                a: -0.02
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f561ddac507ccdc1077.webp',
+                transform: [1, 0, 0, 1, 40, 10],
+                width: 816.9,
+                blur: 1,
+                a: 0.09
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f561ddac507ccdc102a.webp',
+                transform: [1, 0, 0, 1, 20, 0],
+                blur: 3,
+                width: 1805.6,
+                a: 0.3
+            },
+            {
+                url: 'https://pic.imgdb.cn/item/64d89f821ddac507ccdc71c6.webp',
+                transform: [1, 0, 0, 1, 0, 0],
+                width: 2400,
+                a: 0.25
+            }
+        ]
+
+        const body = document.getElementById('app')
+        let layers = []
+
+        function initItems() {
+            body.style.display = 'none'
+            for (let i = 0; i < barnerImagesData.length; i++) {
+                const item = barnerImagesData[i]
+                // 创建 layer
+                const layer = document.createElement('div')
+                layer.classList.add('layer')
+                // 创建 imgage
+                const img = document.createElement('img')
+                img.src = item.url
+
+                img.style.filter = `blur(${item.blur}px)`
+                img.style.width = `${item.width}px`
+
+                // 将 layer 添加到容器中
+                layer.appendChild(img)
+                body.appendChild(layer)
+            }
+            body.style.display = ''
+            // 把创建好的 layers 缓存起来，方便后续操作
+            layers = document.querySelectorAll(".layer")
+        }
+
+        initItems()
+
+        let initX = 0 // 初始值
+        let moveX = 0 // 偏移值
+
+        // 初始化位置
+        body.addEventListener('mouseover', (e) => initX = e.pageX)
+        body.addEventListener('mousemove', (e) => {
+            moveX = e.pageX - initX
+            // requestAnimationFrame 来辅助执行，它会通过浏览器的刷新频率来调度动画帧，自动以最佳的性能进行渲染
+            requestAnimationFrame(function () {
+                animate()
+            })
+        })
+
+        // 动画执行
+        function animate() {
+            for (let i = 0; i < layers.length; i++) {
+                const layer = layers[i];
+                const item = barnerImagesData[i]
+                let m = new DOMMatrix(item.transform)
+                let move = moveX * item.a // 移动X translateX
+                m = m.multiply(new DOMMatrix([1, 0, 0, 1, move, 0]))
+                layer.style.transform = m // 应用所有变换效果
+            }
+        }
+
+
+        body.addEventListener("mouseleave", function() {
+            startTime = 0;
+            requestAnimationFrame(homing); // 开始动画
+        })
+
+    </script>
+</body>
+
+</html>
