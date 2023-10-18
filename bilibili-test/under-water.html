@@ -172,6 +172,9 @@
                 img.style.filter = `blur(${item.blur}px)`
                 img.style.width = `${item.width}px`
 
+                // 初始化时设置起始透明度
+                item.opacity && (layer.style.opacity = item.opacity[0])
+
                 // 将 layer 添加到容器中
                 layer.appendChild(img)
                 body.appendChild(layer)
@@ -196,23 +199,66 @@
             })
         })
 
+        const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
+
         // 动画执行
         function animate() {
             for (let i = 0; i < layers.length; i++) {
                 const layer = layers[i];
                 const item = barnerImagesData[i]
+                const isHoming = typeof progress === 'number'
                 let m = new DOMMatrix(item.transform)
                 let move = moveX * item.a // 移动X translateX
-                m = m.multiply(new DOMMatrix([1, 0, 0, 1, move, 0]))
+                // m = m.multiply(new DOMMatrix([1, 0, 0, 1, move, 0]))
+
+                let s = item.f ? item.f * moveX + 1 : 1 // 放大比例 Scale
+                let g = moveX * (item.g || 0) // 移动Y translateY
+                m = m.multiply(new DOMMatrix([m.a * s, m.b, m.c, m.d * s, move, g]))
+                // 有透明度变化
+                if (item.opacity) {
+                    layer.style.opacity = isHoming && moveX > 0 ? lerp(item.opacity[1], item.opacity[0], progress) : lerp(item.opacity[0], item.opacity[1], moveX / window.innerWidth * 2)
+                }
+                // 有旋转角度
+                if (item.deg) {
+                    const deg = item.deg * moveX
+                    m = m.multiply(new DOMMatrix([Math.cos(deg), Math.sin(deg), -Math.sin(deg), Math.cos(deg), 0, 0]))
+                }
+
+                if (isHoming) { // 回正时处理
+                    m.e = lerp(moveX * item.a + item.transform[4], item.transform[4], progress)
+                    move = 0
+                    s = lerp(item.f ? item.f * moveX + 1 : 1, 1, progress)
+                    g = lerp(item.g ? item.g * moveX : 0, 0, progress)
+                }
+                m = m.multiply(new DOMMatrix([m.a * s, m.b, m.c, m.d * s, move, g]))
+                if (item.deg) { // 有旋转角度
+                    const deg = isHoming ? lerp(item.deg * moveX, 0, progress) : item.deg * moveX
+                    m = m.multiply(new DOMMatrix([Math.cos(deg), Math.sin(deg), -Math.sin(deg), Math.cos(deg), 0, 0]))
+                }
                 layer.style.transform = m // 应用所有变换效果
             }
         }
 
 
-        body.addEventListener("mouseleave", function() {
-            startTime = 0;
-            requestAnimationFrame(homing); // 开始动画
-        })
+        // 鼠标已经离开了视窗或者切出浏览器，执行回正动画
+        body.addEventListener("mouseleave", leave)
+        window.onblur = leave
+
+        let startTime;
+        const duration = 300; // 动画持续时间（毫秒）
+
+        function leave() {
+            startTime = 0; // 离开时初始值归零
+            requestAnimationFrame(homing); // 开始回弹动画
+        }
+
+        function homing(timestamp) {
+            !startTime && (startTime = timestamp)
+            const elapsed = timestamp - startTime // 计算经过时间
+            const progress = Math.min(elapsed / duration, 1)
+            progress < 1 && requestAnimationFrame(homing) // 继续下一帧
+        }
+
 
     </script>
 </body>

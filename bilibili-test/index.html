@@ -369,3 +369,15 @@
 </body>
 
 </html>
+
+
+<!-- const layersEl = document.getElementsByClassName('animated-banner')[0].getElementsByClassName('layer');
+let layers = [];
+const pattern = /translate\(([-.\d]+px), ([-.\d]+px)\)/;
+for (let i = 0; i < layersEl.length; i++) {
+    const {width, height, src, style} = layersEl[i].firstElementChild;
+    const matches = style.transform.match(pattern);
+    const transform = [1,0,0,1,...matches.slice(1).map(x => +x.replace('px', ''))]
+    layers.push({width, height, url:src, transform, a: 0.01})
+}
+JSON.stringify(layers) -->
